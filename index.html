@@ -1,8 +1,12 @@
 <!doctype html>
-<html lang="en">
+
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Comment le cerveau perçoit le temps</title>
 
     <style>
@@ -14,13 +18,23 @@
         background: black;
         overflow: hidden;
         color: white;
+        font-family: Arial, sans-serif;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        cursor: pointer;
       }
 
       #instructions {
         position: fixed;
-        top: 20px;
-        left: 20px;
+        top: max(20px, env(safe-area-inset-top));
+        left: max(20px, env(safe-area-inset-left));
+        right: max(20px, env(safe-area-inset-right));
         z-index: 10;
+
+        font-size: clamp(14px, 4vw, 18px);
+        line-height: 1.5;
       }
 
       #counter {
@@ -30,8 +44,9 @@
         transform: translate(-50%, -50%);
         z-index: 10;
 
-        font-size: 48px;
+        font-size: clamp(40px, 12vw, 64px);
         font-weight: bold;
+        pointer-events: none;
       }
 
       #flash {
@@ -40,16 +55,33 @@
         background: white;
         opacity: 0;
         pointer-events: none;
+        z-index: 20;
+      }
+
+      .mobile-only {
+        display: none;
+      }
+
+      @media (max-width: 699px) {
+        .desktop-only {
+          display: none;
+        }
+
+        .mobile-only {
+          display: inline;
+        }
       }
     </style>
   </head>
 
   <body>
     <div id="instructions">
-      Appuie sur A pour que l'écran clignote blanc.<br />
+      Appuie sur <strong>A</strong> ou tape l'écran pour que l'écran clignote
+      blanc.<br />
+
       Regarde le milieu de l'écran.<br />
-      Appuie environ à chaque demi-seconde.<br />
-      Le 21e clignotement surviendra juste avant que tu appuies sur la touche A.
+      Appuie environ à chaque seconde.<br />
+      Le 21e clignotement surviendra juste avant que tu appuies.
     </div>
 
     <div id="counter">0</div>
@@ -67,37 +99,49 @@
       let delay = 0;
       let flashCount = 0;
 
-      document.addEventListener("keydown", function (event) {
-        // Only react to the A key
-        if (event.key.toLowerCase() !== "a") {
-          return;
-        }
-
-        // Capture the current delay for this key press
+      function triggerFlash() {
         const currentDelay = delay;
 
-        // Increase delay for the next press
         delay += DELAY_STEP;
 
-        // After 200ms, the next press starts again at 0ms
         if (delay > MAX_DELAY) {
           delay = 0;
         }
 
-        // Schedule the flash
         setTimeout(() => {
-          // Count the flash
           flashCount++;
-          if (flashCount == 21) flashCount = 1;
+
+          if (flashCount === 21) {
+            flashCount = 1;
+          }
+
           counter.textContent = flashCount;
 
-          // Flash white
           flash.style.opacity = "1";
 
           setTimeout(() => {
             flash.style.opacity = "0";
           }, FLASH_DURATION);
         }, currentDelay);
+      }
+
+      // Desktop: press A
+      document.addEventListener("keydown", function (event) {
+        if (event.key.toLowerCase() !== "a") {
+          return;
+        }
+
+        triggerFlash();
+      });
+
+      // Mobile and desktop: tap/click anywhere
+      document.addEventListener("pointerdown", function (event) {
+        // Don't trigger twice from keyboard-generated pointer events
+        if (event.pointerType === "mouse" && event.button !== 0) {
+          return;
+        }
+
+        triggerFlash();
       });
     </script>
   </body>
